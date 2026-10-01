@@ -1,4 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { getTasks } from "../services/taskService";
+
 
 const initialState = {
   tasks: [
@@ -39,21 +41,30 @@ const initialState = {
   error:null
 };
 
+// export const fetchTasks = createAsyncThunk(
+//   "tasks/fetchTasks",
+//   async () => {
+//     await new Promise((resolve) => setTimeout(resolve, 2000));
+
+//     return [
+//       {
+//         id: 101,
+//         title: "Task from API",
+//         description: "This is temporary async data",
+//         status: "TODO",
+//         priority: "HIGH",
+//         assignedTo: "Bharath"
+//       }
+//     ];
+//   }
+// );
+
 export const fetchTasks = createAsyncThunk(
   "tasks/fetchTasks",
   async () => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await getTasks();
 
-    return [
-      {
-        id: 101,
-        title: "Task from API",
-        description: "This is temporary async data",
-        status: "TODO",
-        priority: "HIGH",
-        assignedTo: "Bharath"
-      }
-    ];
+    return response.data;
   }
 );
 
@@ -84,7 +95,7 @@ const taskSlice = createSlice({
         );
     }
   },
-  
+
   extraReducers: (builder) => {
   builder
     .addCase(fetchTasks.pending, (state) => {
