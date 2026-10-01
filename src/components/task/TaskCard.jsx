@@ -1,4 +1,4 @@
-function TaskCard({ task, onDelete }) {
+function TaskCard({ task, onDelete , onEdit}) {
   return (
     <div className="task-card">
 
@@ -18,7 +18,7 @@ function TaskCard({ task, onDelete }) {
         Assigned To: {task.assignedTo}
       </p>
 
-      <button>
+      <button onClick={() => onEdit(task)}>
         Edit
       </button>
 
