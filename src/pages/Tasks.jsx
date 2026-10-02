@@ -9,8 +9,9 @@
 
 // export default Tasks;
 
-import { useState , useEffect } from "react";
+// import { useState , useEffect } from "react";
 import { useSelector , useDispatch} from "react-redux";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 import {
   addTask,
@@ -38,6 +39,10 @@ function Tasks() {
   const [showForm, setShowForm] = useState(false);
 
   const [editingTask, setEditingTask] = useState(null);
+
+  const searchRef = useRef(null);
+
+  const [theme, setTheme] = useState("light");
 
   const tasks = useSelector((state) => state.tasks.tasks);
 
@@ -87,55 +92,99 @@ function Tasks() {
 //     }
 //   ]);
 
-  function handleDelete(id) {
-    // setTasks(
-    //   tasks.filter((task) => task.id !== id)
-    // );
+//   function handleDelete(id) {
+//     // setTasks(
+//     //   tasks.filter((task) => task.id !== id)
+//     // );
 
+//     dispatch(deleteTask(id));
+//   }
+
+//   function handleEdit(task) {
+//     setEditingTask(task);
+//     setShowForm(true);
+//   }
+
+  const handleDelete = useCallback((id) => {
     dispatch(deleteTask(id));
-  }
+    }, [dispatch]);
 
-  function handleEdit(task) {
+    const handleEdit = useCallback((task) => {
     setEditingTask(task);
     setShowForm(true);
-  }
+    }, []);
 
 //   const filteredTasks = tasks.filter((task) =>
 //   task.title.toLowerCase().includes(search.toLowerCase()));
 
-    const filteredTasks = tasks
-    .filter((task) =>
-        task.title.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((task) =>
-        statusFilter === "ALL"
-        ? true
-        : task.status === statusFilter
-    )
-    .filter((task) =>
-    priorityFilter === "ALL"
-      ? true
-      : task.priority === priorityFilter
-    );
+    // const filteredTasks = tasks
+    // .filter((task) =>
+    //     task.title.toLowerCase().includes(search.toLowerCase())
+    // )
+    // .filter((task) =>
+    //     statusFilter === "ALL"
+    //     ? true
+    //     : task.status === statusFilter
+    // )
+    // .filter((task) =>
+    // priorityFilter === "ALL"
+    //   ? true
+    //   : task.priority === priorityFilter
+    // );
 
-    const sortedTasks = [...filteredTasks].sort((a, b) => {
+    // const sortedTasks = [...filteredTasks].sort((a, b) => {
 
-    if (sortBy === "TITLE") {
-        return a.title.localeCompare(b.title);
+    // if (sortBy === "TITLE") {
+    //     return a.title.localeCompare(b.title);
+    // }
+
+    // if (sortBy === "PRIORITY") {
+    //     const priorityOrder = {
+    //     HIGH: 1,
+    //     MEDIUM: 2,
+    //     LOW: 3
+    //     };
+
+    //     return priorityOrder[a.priority] - priorityOrder[b.priority];
+    // }
+
+    // return 0;
+    // });
+
+    function focusSearch() {
+        searchRef.current.focus();
     }
 
-    if (sortBy === "PRIORITY") {
-        const priorityOrder = {
-        HIGH: 1,
-        MEDIUM: 2,
-        LOW: 3
-        };
+    const sortedTasks = useMemo(() => {
+        const filtered = tasks
+            .filter((task) =>
+            task.title.toLowerCase().includes(search.toLowerCase())
+            )
+            .filter((task) =>
+            statusFilter === "ALL" ? true : task.status === statusFilter
+            )
+            .filter((task) =>
+            priorityFilter === "ALL" ? true : task.priority === priorityFilter
+            );
 
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-    }
+        return [...filtered].sort((a, b) => {
+            if (sortBy === "TITLE") {
+            return a.title.localeCompare(b.title);
+            }
 
-    return 0;
-    });
+            if (sortBy === "PRIORITY") {
+            const priorityOrder = {
+                HIGH: 1,
+                MEDIUM: 2,
+                LOW: 3
+            };
+
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+            }
+
+            return 0;
+        });
+    }, [tasks, search, statusFilter, priorityFilter, sortBy]);
 
     const totalPages = Math.ceil(
     sortedTasks.length / tasksPerPage
@@ -210,14 +259,23 @@ function Tasks() {
         />
       )}
 
+      <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+        Change Theme
+    </button>
+
       <div className="task-controls">
 
       <input
+            ref={searchRef}
             type="text"
             placeholder="Search tasks..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             />
+
+        <button onClick={focusSearch}>
+            Focus Search
+        </button>
 
         <select
             value={statusFilter}

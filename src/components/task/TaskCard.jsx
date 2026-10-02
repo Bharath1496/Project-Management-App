@@ -1,4 +1,8 @@
-function TaskCard({ task, onDelete , onEdit}) {
+import React from "react";
+
+const TaskCard = React.memo(function TaskCard({ task, onDelete, onEdit }) {
+  console.log("TaskCard rendered:", task.id);
+    
   return (
     <div className="task-card">
 
@@ -28,6 +32,6 @@ function TaskCard({ task, onDelete , onEdit}) {
 
     </div>
   );
-}
+});
 
 export default TaskCard;
