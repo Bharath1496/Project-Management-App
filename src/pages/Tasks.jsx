@@ -1,23 +1,9 @@
-// function Tasks() {
-//   return (
-//     <div>
-//       <h1>Tasks</h1>
-//       <p>Manage your tasks here.</p>
-//     </div>
-//   );
-// }
-
-// export default Tasks;
-
-// import { useState , useEffect } from "react";
 import { useSelector , useDispatch} from "react-redux";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 import {
-  addTask,
-  updateTask,
-  deleteTask,
-  fetchTasks
+  fetchTasks,
+  createTask
 } from "../store/taskSlice";
 
 import TaskCard from "../components/task/TaskCard";
@@ -48,6 +34,14 @@ function Tasks() {
 
   const loading = useSelector((state) => state.tasks.loading);
 
+  const createLoading = useSelector(
+    (state) => state.tasks.createLoading
+  );
+
+  const createError = useSelector(
+    (state) => state.tasks.createError
+  );
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -56,105 +50,20 @@ function Tasks() {
 
   const tasksPerPage = 2;
 
-  
-//   const [tasks, setTasks] = useState([
-//     {
-//       id: 1,
-//       title: "Design login page",
-//       description: "Create UI for login screen",
-//       status: "TODO",
-//       priority: "HIGH",
-//       assignedTo: "Bharath"
-//     },
-//     {
-//       id: 2,
-//       title: "Create authentication API",
-//       description: "Implement login REST API",
-//       status: "IN_PROGRESS",
-//       priority: "HIGH",
-//       assignedTo: "Rahul"
-//     },
-//     {
-//       id: 3,
-//       title: "Create database tables",
-//       description: "Create PostgreSQL schema",
-//       status: "COMPLETED",
-//       priority: "MEDIUM",
-//       assignedTo: "Bharath"
-//     },
-//     {
-//       id: 4,
-//       title: "Write documentation",
-//       description: "Document project APIs",
-//       status: "TODO",
-//       priority: "LOW",
-//       assignedTo: "Anil"
-//     }
-//   ]);
-
-//   function handleDelete(id) {
-//     // setTasks(
-//     //   tasks.filter((task) => task.id !== id)
-//     // );
-
+// Removing local state mgmt
+//   const handleDelete = useCallback((id) => {
 //     dispatch(deleteTask(id));
-//   }
-
-//   function handleEdit(task) {
-//     setEditingTask(task);
-//     setShowForm(true);
-//   }
-
-  const handleDelete = useCallback((id) => {
-    dispatch(deleteTask(id));
-    }, [dispatch]);
+//     }, [dispatch]);
 
     const handleEdit = useCallback((task) => {
     setEditingTask(task);
     setShowForm(true);
     }, []);
 
-//   const filteredTasks = tasks.filter((task) =>
-//   task.title.toLowerCase().includes(search.toLowerCase()));
-
-    // const filteredTasks = tasks
-    // .filter((task) =>
-    //     task.title.toLowerCase().includes(search.toLowerCase())
-    // )
-    // .filter((task) =>
-    //     statusFilter === "ALL"
-    //     ? true
-    //     : task.status === statusFilter
-    // )
-    // .filter((task) =>
-    // priorityFilter === "ALL"
-    //   ? true
-    //   : task.priority === priorityFilter
-    // );
-
-    // const sortedTasks = [...filteredTasks].sort((a, b) => {
-
-    // if (sortBy === "TITLE") {
-    //     return a.title.localeCompare(b.title);
-    // }
-
-    // if (sortBy === "PRIORITY") {
-    //     const priorityOrder = {
-    //     HIGH: 1,
-    //     MEDIUM: 2,
-    //     LOW: 3
-    //     };
-
-    //     return priorityOrder[a.priority] - priorityOrder[b.priority];
-    // }
-
-    // return 0;
-    // });
-
     function focusSearch() {
         searchRef.current.focus();
     }
-
+    
     const sortedTasks = useMemo(() => {
         const filtered = tasks
             .filter((task) =>
@@ -203,42 +112,26 @@ function Tasks() {
         setShowForm(true);
     }
 
-    function handleSaveTask(formData) {
+    async function handleSaveTask(formData) {
 
-        if (editingTask) {
-            // setTasks(
-            // tasks.map((task) =>
-            //     task.id === editingTask.id
-            //     ? { ...task, ...formData }
-            //     : task
-            // )
-            // );
-            dispatch(
-                updateTask({
-                    id: editingTask.id,
-                    ...formData
-                })
-            );
+    if (editingTask) {
+        // Update will be implemented separately.
+        return;
+    }
 
-        } else {
+    try {
 
-            const newTask = {
-            id: Date.now(),
-            ...formData
-            };
-
-            // setTasks([
-            // ...tasks,
-            // newTask
-            // ]);
-            dispatch(addTask(newTask));
-        }
+        await dispatch(createTask(formData)).unwrap();
 
         setShowForm(false);
         setEditingTask(null);
-    }
 
-  return (
+        } catch (error) {
+            console.error("Create task failed:", error);
+        }
+    }
+  
+    return (
     <div>
 
       <h1>Tasks</h1>
@@ -256,6 +149,7 @@ function Tasks() {
                 setShowForm(false);
                 setEditingTask(null);
             }}
+            loading={createLoading}
         />
       )}
 
@@ -306,17 +200,6 @@ function Tasks() {
             <option value="PRIORITY">Priority</option>
         </select>
       </div>
-      {/* <div className="task-list">
-
-        {sortedTasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onDelete={handleDelete}
-          />
-        ))}
-
-      </div> */}
 
       {loading ? (
         <p>Loading tasks...</p>
@@ -328,7 +211,7 @@ function Tasks() {
             <TaskCard
                 key={task.id}
                 task={task}
-                onDelete={handleDelete}
+                // onDelete={handleDelete}
                 onEdit={handleEdit}
             />
             ))}

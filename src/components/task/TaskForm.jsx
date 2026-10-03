@@ -2,7 +2,7 @@ import { useState } from "react";
 
 
 
-function TaskForm({ onSave, editingTask, onCancel }) {
+function TaskForm({ onSave, editingTask, onCancel , loading}) {
 
   const [formData, setFormData] = useState({
     title: editingTask?.title || "",
@@ -75,13 +75,21 @@ function TaskForm({ onSave, editingTask, onCancel }) {
         onChange={handleChange}
       />
 
-      <button type="submit">
+      {/* <button type="submit">
         Save
-      </button>
+      </button> */}
 
+       <button
+        type="submit"
+        disabled={loading}
+      >
+        {loading ? "Creating..." : "Save"}
+      </button>
+      
       <button
         type="button"
         onClick={onCancel}
+        disabled={loading}
       >
         Cancel
       </button>
