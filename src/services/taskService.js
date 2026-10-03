@@ -1,12 +1,12 @@
-import axios from "axios";
-
+// import axios from "axios";
+import api from "./api";
 
 // =========================
 // GET
 // =========================
 
 export function getTasks() {
-  return axios.get("/api/tasks");
+  return api.get("/tasks");
 }
 
 
@@ -15,16 +15,15 @@ export function getTasks() {
 // =========================
 
 export function createTask(taskData) {
-  return axios.post("/api/tasks", taskData);
+  return api.post("/tasks", taskData);
 }
-
 
 // =========================
 // UPDATE
 // =========================
 
 export function updateTask(id, taskData) {
-  return axios.put(`/api/tasks/${id}`, taskData);
+  return api.put(`/tasks/${id}`, taskData);
 }
 
 
@@ -33,5 +32,5 @@ export function updateTask(id, taskData) {
 // =========================
 
 export function deleteTask(id) {
-  return axios.delete(`/api/tasks/${id}`);
+  return api.delete(`/tasks/${id}`);
 }

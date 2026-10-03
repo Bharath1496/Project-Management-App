@@ -22,6 +22,7 @@ import TaskCard from "../components/task/TaskCard";
 
 import TaskForm from "../components/task/TaskForm";
 
+import useDebounce from "../hooks/useDebounce";
 
 function Tasks() {
 
@@ -30,6 +31,8 @@ function Tasks() {
   // =====================================================
 
   const [search, setSearch] = useState("");
+
+  const debouncedSearch = useDebounce(search, 500);
 
   const [statusFilter, setStatusFilter] = useState("ALL");
 
@@ -44,7 +47,6 @@ function Tasks() {
   const [editingTask, setEditingTask] = useState(null);
 
   const [theme, setTheme] = useState("light");
-
 
   const searchRef = useRef(null);
 
@@ -106,6 +108,9 @@ function Tasks() {
 
   }, [dispatch]);
 
+  useEffect(() => {
+    console.log("Debounced search:", debouncedSearch);
+    }, [debouncedSearch]);
 
   // =====================================================
   // PAGINATION
