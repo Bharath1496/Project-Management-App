@@ -15,10 +15,10 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
   function handleChange(e) {
     const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
+    setFormData((previous) => ({
+      ...previous,
       [name]: value
-    });
+    }));
   }
 
   function handleSubmit(e) {
@@ -39,6 +39,7 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
         placeholder="Task title"
         value={formData.title}
         onChange={handleChange}
+        disabled={loading}
       />
 
       <textarea
@@ -46,12 +47,14 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
         placeholder="Description"
         value={formData.description}
         onChange={handleChange}
+        disabled={loading}
       />
 
       <select
         name="status"
         value={formData.status}
         onChange={handleChange}
+        disabled={loading}
       >
         <option value="TODO">Todo</option>
         <option value="IN_PROGRESS">In Progress</option>
@@ -62,6 +65,7 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
         name="priority"
         value={formData.priority}
         onChange={handleChange}
+        disabled={loading}
       >
         <option value="HIGH">High</option>
         <option value="MEDIUM">Medium</option>
@@ -73,6 +77,7 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
         placeholder="Assigned To"
         value={formData.assignedTo}
         onChange={handleChange}
+        disabled={loading}
       />
 
       {/* <button type="submit">
@@ -83,9 +88,16 @@ function TaskForm({ onSave, editingTask, onCancel , loading}) {
         type="submit"
         disabled={loading}
       >
-        {loading ? "Creating..." : "Save"}
+        {loading
+          ? editingTask
+            ? "Updating..."
+            : "Creating..."
+          : editingTask
+            ? "Update"
+            : "Save"
+        }
       </button>
-      
+
       <button
         type="button"
         onClick={onCancel}

@@ -1,16 +1,43 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getTasks , createTask as createTaskApi} from "../services/taskService";
+import {
+  getTasks,
+  createTask as createTaskApi,
+  updateTask as updateTaskApi,
+  deleteTask as deleteTaskApi
+} from "../services/taskService";
 
 
 const initialState = {
+  // =========================
+  // TASK DATA
+  // =========================
   tasks: [],
 
+  // =========================
+  // GET
+  // =========================
   loading: false,
   error: null,
 
+  // =========================
+  // CREATE
+  // =========================
   createLoading: false,
-  createError: null
+  createError: null,
+
+  // =========================
+  // UPDATE
+  // =========================
+  updateLoading: false,
+  updateError: null,
+
+  // =========================
+  // DELETE
+  // =========================
+  deleteLoading: false,
+  deleteError: null
 };
+
 
 // =========================
 // GET TASKS

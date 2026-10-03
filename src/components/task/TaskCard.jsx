@@ -1,6 +1,7 @@
 import React from "react";
 
-const TaskCard = React.memo(function TaskCard({ task, onDelete, onEdit }) {
+const TaskCard = React.memo(function TaskCard({ task, onDelete, onEdit ,
+  deleteLoading}) {
   console.log("TaskCard rendered:", task.id);
     
   return (
@@ -22,12 +23,18 @@ const TaskCard = React.memo(function TaskCard({ task, onDelete, onEdit }) {
         Assigned To: {task.assignedTo}
       </p>
 
-      <button onClick={() => onEdit(task)}>
+       <button
+        onClick={() => onEdit(task)}
+        disabled={deleteLoading}
+      >
         Edit
       </button>
 
-      <button onClick={() => onDelete(task.id)}>
-        Delete
+      <button
+        onClick={() => onDelete(task.id)}
+        disabled={deleteLoading}
+      >
+        {deleteLoading ? "Deleting..." : "Delete"}
       </button>
 
     </div>

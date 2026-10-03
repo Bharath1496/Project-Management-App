@@ -1,17 +1,34 @@
-import { useSelector , useDispatch} from "react-redux";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+  useSelector,
+  useDispatch
+} from "react-redux";
+
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef
+} from "react";
 
 import {
   fetchTasks,
-  createTask
+  createTask,
+  updateTask,
+  deleteTask
 } from "../store/taskSlice";
 
 import TaskCard from "../components/task/TaskCard";
 
 import TaskForm from "../components/task/TaskForm";
 
+
 function Tasks() {
-    
+
+  // =====================================================
+  // LOCAL UI STATE
+  // =====================================================
+
   const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -26,220 +43,553 @@ function Tasks() {
 
   const [editingTask, setEditingTask] = useState(null);
 
-  const searchRef = useRef(null);
-
   const [theme, setTheme] = useState("light");
 
-  const tasks = useSelector((state) => state.tasks.tasks);
 
-  const loading = useSelector((state) => state.tasks.loading);
+  const searchRef = useRef(null);
+
+
+  // =====================================================
+  // REDUX STATE
+  // =====================================================
+
+  const tasks = useSelector(
+    (state) => state.tasks.tasks
+  );
+
+
+  const loading = useSelector(
+    (state) => state.tasks.loading
+  );
+
 
   const createLoading = useSelector(
     (state) => state.tasks.createLoading
   );
 
+
   const createError = useSelector(
     (state) => state.tasks.createError
   );
 
+
+  const updateLoading = useSelector(
+    (state) => state.tasks.updateLoading
+  );
+
+
+  const updateError = useSelector(
+    (state) => state.tasks.updateError
+  );
+
+
+  const deleteLoading = useSelector(
+    (state) => state.tasks.deleteLoading
+  );
+
+
+  const deleteError = useSelector(
+    (state) => state.tasks.deleteError
+  );
+
+
   const dispatch = useDispatch();
 
+
+  // =====================================================
+  // GET TASKS
+  // =====================================================
+
   useEffect(() => {
+
     dispatch(fetchTasks());
-    }, [dispatch]);
+
+  }, [dispatch]);
+
+
+  // =====================================================
+  // PAGINATION
+  // =====================================================
 
   const tasksPerPage = 2;
 
-// Removing local state mgmt
-//   const handleDelete = useCallback((id) => {
-//     dispatch(deleteTask(id));
-//     }, [dispatch]);
 
-    const handleEdit = useCallback((task) => {
+  // =====================================================
+  // EDIT CLICK
+  // =====================================================
+
+  const handleEdit = useCallback((task) => {
+
     setEditingTask(task);
+
     setShowForm(true);
-    }, []);
 
-    function focusSearch() {
-        searchRef.current.focus();
-    }
-    
-    const sortedTasks = useMemo(() => {
-        const filtered = tasks
-            .filter((task) =>
-            task.title.toLowerCase().includes(search.toLowerCase())
-            )
-            .filter((task) =>
-            statusFilter === "ALL" ? true : task.status === statusFilter
-            )
-            .filter((task) =>
-            priorityFilter === "ALL" ? true : task.priority === priorityFilter
-            );
+  }, []);
 
-        return [...filtered].sort((a, b) => {
-            if (sortBy === "TITLE") {
-            return a.title.localeCompare(b.title);
-            }
 
-            if (sortBy === "PRIORITY") {
-            const priorityOrder = {
-                HIGH: 1,
-                MEDIUM: 2,
-                LOW: 3
-            };
+  // =====================================================
+  // DELETE
+  // =====================================================
 
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-            }
+  const handleDelete = useCallback(
+    async (id) => {
 
-            return 0;
-        });
-    }, [tasks, search, statusFilter, priorityFilter, sortBy]);
+      try {
 
-    const totalPages = Math.ceil(
+        await dispatch(
+          deleteTask(id)
+        ).unwrap();
+
+      } catch (error) {
+
+        console.error(
+          "Delete task failed:",
+          error
+        );
+      }
+
+    },
+    [dispatch]
+  );
+
+
+  // =====================================================
+  // SEARCH FOCUS
+  // =====================================================
+
+  function focusSearch() {
+
+    searchRef.current?.focus();
+  }
+
+
+  // =====================================================
+  // FILTER + SORT
+  // =====================================================
+
+  const sortedTasks = useMemo(() => {
+
+    const filtered = tasks
+
+      .filter((task) =>
+        task.title
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      )
+
+      .filter((task) =>
+        statusFilter === "ALL"
+          ? true
+          : task.status === statusFilter
+      )
+
+      .filter((task) =>
+        priorityFilter === "ALL"
+          ? true
+          : task.priority === priorityFilter
+      );
+
+
+    return [...filtered].sort((a, b) => {
+
+      if (sortBy === "TITLE") {
+
+        return a.title.localeCompare(
+          b.title
+        );
+      }
+
+
+      if (sortBy === "PRIORITY") {
+
+        const priorityOrder = {
+          HIGH: 1,
+          MEDIUM: 2,
+          LOW: 3
+        };
+
+
+        return (
+          priorityOrder[a.priority] -
+          priorityOrder[b.priority]
+        );
+      }
+
+
+      return 0;
+
+    });
+
+  }, [
+    tasks,
+    search,
+    statusFilter,
+    priorityFilter,
+    sortBy
+  ]);
+
+
+  // =====================================================
+  // PAGINATED TASKS
+  // =====================================================
+
+  const totalPages = Math.ceil(
     sortedTasks.length / tasksPerPage
+  );
+
+
+  const startIndex =
+    (currentPage - 1) *
+    tasksPerPage;
+
+
+  const paginatedTasks =
+    sortedTasks.slice(
+      startIndex,
+      startIndex + tasksPerPage
     );
 
-    const startIndex =
-    (currentPage - 1) * tasksPerPage;
 
-    const paginatedTasks = sortedTasks.slice(
-    startIndex,
-    startIndex + tasksPerPage
-    );
+  // =====================================================
+  // OPEN CREATE FORM
+  // =====================================================
 
-    function handleCreateTask() {
-        setEditingTask(null);
-        setShowForm(true);
-    }
+  function handleCreateTask() {
 
-    async function handleSaveTask(formData) {
+    setEditingTask(null);
 
-    if (editingTask) {
-        // Update will be implemented separately.
-        return;
-    }
+    setShowForm(true);
+  }
+
+
+  // =====================================================
+  // CREATE / UPDATE
+  // =====================================================
+
+  async function handleSaveTask(formData) {
 
     try {
 
-        await dispatch(createTask(formData)).unwrap();
+      // ==========================================
+      // UPDATE
+      // ==========================================
 
-        setShowForm(false);
-        setEditingTask(null);
+      if (editingTask) {
 
-        } catch (error) {
-            console.error("Create task failed:", error);
-        }
+        await dispatch(
+          updateTask({
+            id: editingTask.id,
+            taskData: formData
+          })
+        ).unwrap();
+
+      }
+
+      // ==========================================
+      // CREATE
+      // ==========================================
+
+      else {
+
+        await dispatch(
+          createTask(formData)
+        ).unwrap();
+
+      }
+
+
+      // ==========================================
+      // ONLY AFTER SUCCESS
+      // ==========================================
+
+      setShowForm(false);
+
+      setEditingTask(null);
+
+    } catch (error) {
+
+      console.error(
+        "Save task failed:",
+        error
+      );
     }
-  
-    return (
+  }
+
+
+  // =====================================================
+  // FORM LOADING
+  // =====================================================
+
+  const formLoading =
+    editingTask
+      ? updateLoading
+      : createLoading;
+
+
+  return (
+
     <div>
 
       <h1>Tasks</h1>
 
-      <button className="create-task-button" onClick={handleCreateTask}>
+
+      {/* ==========================================
+          CREATE BUTTON
+          ========================================== */}
+
+      <button
+        className="create-task-button"
+        onClick={handleCreateTask}
+      >
         + Create Task
-        
       </button>
 
+
+      {/* ==========================================
+          FORM
+          ========================================== */}
+
       {showForm && (
+
         <TaskForm
-            editingTask={editingTask}
-            onSave={handleSaveTask}
-            onCancel={() => {
-                setShowForm(false);
-                setEditingTask(null);
-            }}
-            loading={createLoading}
+          editingTask={editingTask}
+          onSave={handleSaveTask}
+          onCancel={() => {
+
+            setShowForm(false);
+
+            setEditingTask(null);
+          }}
+          loading={formLoading}
         />
+
       )}
 
-      <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+
+      {/* ==========================================
+          CREATE ERROR
+          ========================================== */}
+
+      {createError && !editingTask && (
+
+        <p>
+          {createError}
+        </p>
+      )}
+
+
+      {/* ==========================================
+          UPDATE ERROR
+          ========================================== */}
+
+      {updateError && editingTask && (
+
+        <p>
+          {updateError}
+        </p>
+      )}
+
+
+      {/* ==========================================
+          DELETE ERROR
+          ========================================== */}
+
+      {deleteError && (
+
+        <p>
+          {deleteError}
+        </p>
+      )}
+
+
+      {/* ==========================================
+          THEME
+          ========================================== */}
+
+      <button
+        onClick={() =>
+          setTheme(
+            theme === "light"
+              ? "dark"
+              : "light"
+          )
+        }
+      >
         Change Theme
-    </button>
+      </button>
+
+
+      {/* ==========================================
+          CONTROLS
+          ========================================== */}
 
       <div className="task-controls">
 
-      <input
-            ref={searchRef}
-            type="text"
-            placeholder="Search tasks..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            />
+        <input
+          ref={searchRef}
+          type="text"
+          placeholder="Search tasks..."
+          value={search}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
+        />
+
 
         <button onClick={focusSearch}>
-            Focus Search
+          Focus Search
         </button>
 
-        <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-        >
-            <option value="ALL">All Statuses</option>
-            <option value="TODO">Todo</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-        </select>
 
         <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
+          value={statusFilter}
+          onChange={(e) =>
+            setStatusFilter(e.target.value)
+          }
         >
-            <option value="ALL">All Priorities</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
+
+          <option value="ALL">
+            All Statuses
+          </option>
+
+          <option value="TODO">
+            Todo
+          </option>
+
+          <option value="IN_PROGRESS">
+            In Progress
+          </option>
+
+          <option value="COMPLETED">
+            Completed
+          </option>
+
         </select>
 
+
         <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+          value={priorityFilter}
+          onChange={(e) =>
+            setPriorityFilter(e.target.value)
+          }
         >
-            <option value="NONE">Sort By</option>
-            <option value="TITLE">Title</option>
-            <option value="PRIORITY">Priority</option>
+
+          <option value="ALL">
+            All Priorities
+          </option>
+
+          <option value="HIGH">
+            High
+          </option>
+
+          <option value="MEDIUM">
+            Medium
+          </option>
+
+          <option value="LOW">
+            Low
+          </option>
+
         </select>
+
+
+        <select
+          value={sortBy}
+          onChange={(e) =>
+            setSortBy(e.target.value)
+          }
+        >
+
+          <option value="NONE">
+            Sort By
+          </option>
+
+          <option value="TITLE">
+            Title
+          </option>
+
+          <option value="PRIORITY">
+            Priority
+          </option>
+
+        </select>
+
       </div>
 
-      {loading ? (
-        <p>Loading tasks...</p>
-        ) : paginatedTasks.length === 0 ? (
-        <p>No tasks found.</p>
-        ) : (
-        <div className="task-list">
-            {paginatedTasks.map((task) => (
-            <TaskCard
-                key={task.id}
-                task={task}
-                // onDelete={handleDelete}
-                onEdit={handleEdit}
-            />
-            ))}
-        </div>
-        )}
 
-         {/* Pagination goes HERE */}
-        <div className="pagination">
+      {/* ==========================================
+          TASK LIST
+          ========================================== */}
+
+      {loading ? (
+
+        <p>
+          Loading tasks...
+        </p>
+
+      ) : paginatedTasks.length === 0 ? (
+
+        <p>
+          No tasks found.
+        </p>
+
+      ) : (
+
+        <div className="task-list">
+
+          {paginatedTasks.map((task) => (
+
+            <TaskCard
+              key={task.id}
+              task={task}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              deleteLoading={deleteLoading}
+            />
+
+          ))}
+
+        </div>
+      )}
+
+
+      {/* ==========================================
+          PAGINATION
+          ========================================== */}
+
+      <div className="pagination">
 
         <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          onClick={() =>
+            setCurrentPage(
+              currentPage - 1
+            )
+          }
         >
-            Previous
+          Previous
         </button>
+
 
         <span>
-            Page {currentPage} of {totalPages}
+          Page {currentPage} of {totalPages}
         </span>
 
+
         <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+          disabled={
+            currentPage === totalPages
+          }
+          onClick={() =>
+            setCurrentPage(
+              currentPage + 1
+            )
+          }
         >
-            Next
+          Next
         </button>
 
-    </div>
+      </div>
 
     </div>
   );
